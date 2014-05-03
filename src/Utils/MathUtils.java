@@ -27,15 +27,15 @@ public class MathUtils {
         return v1.add((u.mul(secs)));
     }
 
-    public static int closestPointOfApproach(Vector v1VehicleA, Vector v2VehicleA, Vector v1VehicleB, Vector v2VehicleB) {
+    public static int closestPointOfApproach(Vector p0, Vector p1, Vector q0, Vector q1) {
 
-        Vector u = v1VehicleA.sub(v2VehicleA);
-        Vector v = v1VehicleB.sub(v2VehicleB);
-        Vector w0 = v1VehicleA.sub(v1VehicleB).negate();
+        Vector u = p1.sub(p0);
+        Vector v = q1.sub(q0);
+        Vector w0 = p0.sub(q0).negate();
 
         double a = w0.dot(u.sub(v));
-        double b = Math.pow((Math.sqrt(Math.pow(u.getX() + u.getY(), 2) + Math.pow(v.getX() + v.getY(), 2))), 2);
-        return (int) (a / b);
+        double b = Math.pow( Math.sqrt( Math.pow( u.getX() + u.getY(), 2) + Math.pow( v.getX() + v.getY(), 2) ) , 2);
+        return (int) Math.floor(a / b);
     }
 
     public static double round(double value) {

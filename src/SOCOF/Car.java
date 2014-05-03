@@ -8,8 +8,11 @@ import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static java.lang.Math.*;
 
 /**
 *
@@ -162,7 +165,7 @@ public class Car {
                 //carro no estado normal. andar velocidade constante
                 case normal:
                     move(dest);
-                    System.out.println("Andar Normal");
+                    //System.out.println("Andar Normal");
                     break;
                 //carro parado
                 case stopping:
@@ -176,7 +179,7 @@ public class Car {
 
                     setVelocityAdd(0.001d);
                     _state = Car.ActionState.normal;
-                    System.out.println("Acelarar");
+                    //System.out.println("Acelarar");
                     break;
                 // carro a reduzir a velocidade
                 case decelerate:
@@ -204,6 +207,7 @@ public class Car {
 
         if (_position.getX() == dest.getX()) {
             if (_position.getY() == dest.getY()) {
+
             } else if (_position.getY() < dest.getY()) {
                 if ((_position.getY() + getVelocity()) <= dest.getY()) {
                     _position.setY(_position.getY() + getVelocity());
@@ -277,35 +281,42 @@ public class Car {
     public void checkCollision() {
 
         ArrayList<Car> cars = _map.getCars();
-        for (int i = 0; i < cars.size(); i++) {
-            Car VehicleB = cars.get(i);
-
+        for (Car VehicleB : cars) {
             if (getId() != VehicleB.getId()) {
                 //mesma direccao ou seja se vão para o mesmo ponto
                 if (getDest().equals(VehicleB.getDest())) {
 
-                    int secondsToCollision = MathUtils.closestPointOfApproach(getPrevPosition(), getPosition(), VehicleB.getPrevPosition(), VehicleB.getPosition());
-
+                    int secondsToCollision = MathUtils.closestPointOfApproach(this.getPrevPosition(), this.getPosition(), VehicleB.getPrevPosition(), VehicleB.getPosition());
+                    System.out.println("seconds to collison = " + secondsToCollision);
                     //verificar a colisao mais proxima
-                    if ((secondsToCollision <= 9 && secondsToCollision > 6) && getDistanceToDest() > VehicleB.getDistanceToDest()) {
-                        setState(Car.ActionState.decelerate);
+                    if ((600 < secondsToCollision && secondsToCollision <= 900) && this.getDistanceToDest() > VehicleB.getDistanceToDest()) {
+                        this.setState(ActionState.decelerate);
+                        if(this.getPosition().getX() - this.getPrevPosition().getX() == 0 ){
+                            // this means it moving through Y, so
+                            this.setPosition(new Vector(this.getPosition().getX() + this.getVelocity(), this.getPosition().getY()));
+                            System.out.println("moving to PLUS X");
+                        }
+                        if(this.getPosition().getY() - this.getPrevPosition().getY() == 0 ){
+                            // this means it moving through X, so
+                            this.setPosition(new Vector(this.getPosition().getX(), this.getPosition().getY() + this.getVelocity() ));
+                            System.out.println("moving to PLUS Y");
+                        }
                         System.out.println("COLISAO decelerate");
                         return;
-                       
-                    } else if ((secondsToCollision <= 6 && secondsToCollision > 2) && getDistanceToDest() > VehicleB.getDistanceToDest()) {
-                        setState(Car.ActionState.stopping);
+                    } else if ((200 < secondsToCollision && secondsToCollision <= 600) && this.getDistanceToDest() > VehicleB.getDistanceToDest()) {
+                        this.setState(ActionState.stopping);
                         System.out.println("COLISAO stopping");
                         return;
-                        
-                    } else if ((secondsToCollision >= 10) || (secondsToCollision <= 2)) {
-                        setState(Car.ActionState.accelerate);
-                        System.out.println("COLISAO accelerate");
+                    } else if ((secondsToCollision >= 1000) || (secondsToCollision <= 200)) {
+                        this.setState(ActionState.accelerate);
+                        Date d = new Date();
+                        System.out.println("COLISAO accelerate - " + d.toString());
                         // } else if ((secondsToCollision <= 1 && secondsToCollision > 0) && getDistanceToDest() > VehicleB.getDistanceToDest()) {
                     } else if (getPosition().distance(VehicleB.getPosition()) < 1.0d) {
-                        System.out.println("Colideu");
+                        System.out.println("Colidiu");
                     }
                 } else {
-                    setState(Car.ActionState.accelerate);
+                    this.setState(ActionState.accelerate);
                 }
             }
         }

@@ -48,7 +48,7 @@ public class Vector {
     }
 
     public Vector sub(Vector v1) {
-        return new Vector(v1.x - x, v1.y - y);
+        return new Vector( x - v1.x , y - v1.y );
     }
 
     /**

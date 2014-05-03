@@ -18,7 +18,7 @@ public class Main {
     public static int frameWidth = 1000;		//largura
     public static int frameHeight = 1000;		//altura
     public static int carDimension = 5;			//dimensao dos carros
-    public static int intervalCollsionDetection = 1;		//check interval
+    public static int intervalCollsionDetection = 100;		//check interval
 
     /**
      * @param args the command line arguments

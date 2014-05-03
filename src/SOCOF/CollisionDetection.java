@@ -26,7 +26,7 @@ public class CollisionDetection extends PauseThread implements Runnable {
                 pausePoint();
                 
                 car.checkCollision();
-                Thread.sleep(Main.intervalCollsionDetection);	//1 unidade por segundo
+                Thread.sleep(Main.intervalCollsionDetection);
             } catch (InterruptedException ex) {
                 Logger.getLogger(CollisionDetection.class.getName()).log(Level.SEVERE, null, ex);
             }
