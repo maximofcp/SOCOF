@@ -29,10 +29,10 @@ public class MapMainUI implements Observer {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.add(mapPanel, BorderLayout.CENTER);
-        panel.add(controlPanel.getControlPanel(), BorderLayout.NORTH);
+        panel.add(controlPanel.getControlPanel(), BorderLayout.SOUTH);
 
         raceFrame.add(panel);
-        raceFrame.setTitle("Project1: Cooperative Collision Warning System \n" + "System");
+        raceFrame.setTitle("Cooperative Collision Warning System \n" + "System");
 
         raceFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         raceFrame.pack();

@@ -1,7 +1,8 @@
 package UI;
 
 import SOCOF.Map;
-import Utils.Vector;
+import Util.Vector;
+
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -33,7 +34,7 @@ public class ControlPanel {
 
     private void createPartControl() {
         panel = new JPanel();
-        panel.setBackground(new Color(240,240,240));
+        panel.setBackground(new Color(255,255,255));
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout());
         startResumeButton = new JButton("Start");

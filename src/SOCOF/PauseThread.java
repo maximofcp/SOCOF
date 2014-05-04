@@ -9,10 +9,10 @@ import java.util.logging.Logger;
 */
 public class PauseThread {
 
-    private boolean needToPause = true;
+    private boolean pause = true;
 
     public synchronized void pausePoint() {
-        while (needToPause) {
+        while (pause) {
             try {
                 this.wait();
             } catch (InterruptedException ex) {
@@ -22,17 +22,17 @@ public class PauseThread {
     }
 
     public synchronized void pause() {
-        needToPause = true;
+        pause = true;
     }
 
     public synchronized void unpause() {
-        if (needToPause) {
-            needToPause = false;
+        if (pause) {
+        	pause = false;
             this.notifyAll();
         }
     }
 
     public boolean isPause() {
-        return needToPause;
+        return pause;
     }
 }

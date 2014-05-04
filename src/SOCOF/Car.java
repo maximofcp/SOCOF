@@ -1,18 +1,16 @@
 package SOCOF;
 
-import Utils.MathUtils;
-import Utils.Vector;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static java.lang.Math.*;
+import Util.MathUtils;
+import Util.Vector;
 
 /**
 *
@@ -22,108 +20,101 @@ public class Car {
 
     public enum ActionState {
 
-        decelerate,
-        accelerate,
-        stopping,
-        normal;
+        DECELERATE,
+        ACCELERATE,
+        STOP,
+        NORMAL;
     }
-    private short _id;
-    private Map _map;
-    private Vector _prevPosition;
-    private Vector _position;
-    private Vector _initPosition;
-    private Vector[] _path;
+    private short id;
+    private Map map;
+    private Vector previousPosition;
+    private Vector position;
+    private Vector initPosition;
+    private Vector[] path;
 
     private final int STEP = 1;
-    private double _distanceToDest;
-    private int _nextDest;
-    private ActionState _state;
-    private double _velocity = 0.001d;
-    private double _velMin = 0.001d;
-    private double _velMax = 0.1d;
-    private Color _color;
-    private Thread[] _threads = new Thread[2];
-    private PauseThread[] _pause = new PauseThread[2];
+    private double distanceToDest;
+    private int nextDest;
+    private ActionState state;
+    private double velocity = 0.001d;
+    private double minVel = 0.001d;
+    private double maxVel = 0.1d;
+    private Color color;
+    private Thread[] threads = new Thread[2];
+    private PauseThread[] pause = new PauseThread[2];
 
         public Car(short id, Color color, Vector[] path, Map map) {
-        _id = id;
-        _map = map;
-        _color = color;
-        _path = path;
-        _position = path[0].clone();
-        _prevPosition = _position.clone();
-        _initPosition = _position.clone();
-        _state = ActionState.normal;
-
-        //isto td por um pause pff
-        _pause[0] = new CollisionDetection(this);
-        _pause[1] = new MovingCar(this);
-        _threads[0] = new Thread((Runnable) _pause[0]);
-        _threads[1] = new Thread((Runnable) _pause[1]);
+        this.id = id;
+        this.map = map;
+        this.color = color;
+        this.path = path;
+        this.position = path[0].clone();
+        this.previousPosition = this.position.clone();
+        this.initPosition = this.position.clone();
+        this.state = ActionState.NORMAL;
+        pause[0] = new CollisionDetection(this);
+        pause[1] = new CarThread(this);
+        threads[0] = new Thread((Runnable) pause[0]);
+        threads[1] = new Thread((Runnable) pause[1]);
 
         start();
     }
         
     public Car(short id, Color color, Vector pos, Vector[] path, Map map) {
-        _id = id;
-        _map = map;
-        _color = color;
-        _path = path;
-        _position = pos;
-        _prevPosition = pos.clone();
-        _initPosition = pos.clone();
-        _state = ActionState.normal;
-
-        //isto td por um pause pff
-        _pause[0] = new CollisionDetection(this);
-        _pause[1] = new MovingCar(this);
-        _threads[0] = new Thread((Runnable) _pause[0]);
-        _threads[1] = new Thread((Runnable) _pause[1]);
+        this.id = id;
+        this.map = map;
+        this.color = color;
+        this.path = path;
+        this.position = pos;
+        this.previousPosition = pos.clone();
+        this.initPosition = pos.clone();
+        this.state = ActionState.NORMAL;
+        pause[0] = new CollisionDetection(this);
+        pause[1] = new CarThread(this);
+        threads[0] = new Thread((Runnable) pause[0]);
+        threads[1] = new Thread((Runnable) pause[1]);
 
         start();
     }
 
     public Car(short id, Color color, Vector pos, Vector[] path, ActionState s, Map map) {
-        _id = id;
-        _map = map;
-        _color = color;
-        _path = path;
-        _position = pos;
-        _prevPosition = pos.clone();
-        _initPosition = pos.clone();
-        _state = s;
-
-        //isto td por um pause pff
-        _pause[0] = new CollisionDetection(this);
-        _pause[1] = new MovingCar(this);
-        _threads[0] = new Thread((Runnable) _pause[0]);
-        _threads[1] = new Thread((Runnable) _pause[1]);
+        this.id = id;
+        this.map = map;
+        this.color = color;
+        this.path = path;
+        this.position = pos;
+        this.previousPosition = pos.clone();
+        this.initPosition = pos.clone();
+        this.state = s;
+        pause[0] = new CollisionDetection(this);
+        pause[1] = new CarThread(this);
+        threads[0] = new Thread((Runnable) pause[0]);
+        threads[1] = new Thread((Runnable) pause[1]);
 
         start();
     }
 
     public void start() {
-        for (Thread t : _threads) {
+        for (Thread t : threads) {
             t.start();
         }
     }
 
     public void pause() {
-        for (PauseThread t : _pause) {
+        for (PauseThread t : pause) {
             t.pause();
         }
     }
 
     public void unpause() {
-        for (PauseThread t : _pause) {
+        for (PauseThread t : pause) {
             t.unpause();
         }
     }
 
-    @Deprecated
     public Vector getNextPosition() {
         Vector dest = new Vector(60d, 2d);
-        Vector next = _position;
+        Vector next = position;
 
         if (next.getX() != dest.getX() && next.getY() != dest.getY()) {
 
@@ -161,36 +152,35 @@ public class Car {
 
         try {
 
-            switch (_state) {
-                //carro no estado normal. andar velocidade constante
-                case normal:
-                    move(dest);
-                    //System.out.println("Andar Normal");
-                    break;
-                //carro parado
-                case stopping:
-                    move(dest);
-                    setVelocityToZero();
-                    System.out.println("Parado");
-                    break;
-                // carro a aumentar a velocidade
-                case accelerate:
-                    move(dest);
+            switch (state) {
 
-                    setVelocityAdd(0.001d);
-                    _state = Car.ActionState.normal;
-                    //System.out.println("Acelarar");
-                    break;
-                // carro a reduzir a velocidade
-                case decelerate:
+            	// Normal state. Constant speed
+                case NORMAL:
                     move(dest);
-                    setVelocitySub(0.001d);
-                    _state = Car.ActionState.normal;
-                    System.out.println("Travar");
+                    break;
+
+                // Stop state
+                case STOP:
+                    move(dest);
+                    stop();
+                    break;
+
+                // Accelerating state
+                case ACCELERATE:
+                    move(dest);
+                    increaseVelocity(0.001d);
+                    state = Car.ActionState.NORMAL;
+                    break;
+
+                // Decelerating state
+                case DECELERATE:
+                    move(dest);
+                    decreaseVelocity(0.001d);
+                    state = Car.ActionState.NORMAL;
                     break;
             }
 
-            Thread.sleep(STEP);		//1 unidade por segundo
+            Thread.sleep(STEP);
             
         } catch (InterruptedException ex) {
             Logger.getLogger(Car.class.getName()).log(Level.SEVERE, null, ex);
@@ -198,72 +188,73 @@ public class Car {
     }
 
     protected void move(Vector dest) {
-        //guarda a ultima posicao
-        _prevPosition.copy(_position);
 
-        if (_position.equals(dest)) {
+    	// Saves previous position
+        previousPosition.copy(position);
+
+        if (position.equals(dest)) {
             return;
         }
 
-        if (_position.getX() == dest.getX()) {
-            if (_position.getY() == dest.getY()) {
+        if (position.getX() == dest.getX()) {
+            if (position.getY() == dest.getY()) {
 
-            } else if (_position.getY() < dest.getY()) {
-                if ((_position.getY() + getVelocity()) <= dest.getY()) {
-                    _position.setY(_position.getY() + getVelocity());
+            } else if (position.getY() < dest.getY()) {
+                if ((position.getY() + getVelocity()) <= dest.getY()) {
+                    position.setY(position.getY() + getVelocity());
                 } else {
-                    _position.setY(dest.getY());
+                    position.setY(dest.getY());
                 }
             } else {
-                if ((_position.getY() - getVelocity()) >= dest.getY()) {
-                    _position.setY(_position.getY() - getVelocity());
+                if ((position.getY() - getVelocity()) >= dest.getY()) {
+                    position.setY(position.getY() - getVelocity());
                 } else {
-                    _position.setY(dest.getY());
+                    position.setY(dest.getY());
                 }
             }
         } else {
-            if (_position.getX() < dest.getX()) {
-                if ((_position.getX() + getVelocity()) <= dest.getX()) {
-                    _position.setX(_position.getX() + getVelocity());
+            if (position.getX() < dest.getX()) {
+                if ((position.getX() + getVelocity()) <= dest.getX()) {
+                    position.setX(position.getX() + getVelocity());
                 } else {
-                    _position.setX(dest.getX());
+                    position.setX(dest.getX());
                 }
             } else {
-                if ((_position.getX() - getVelocity()) >= dest.getX()) {
-                    _position.setX(_position.getX() - getVelocity());
+                if ((position.getX() - getVelocity()) >= dest.getX()) {
+                    position.setX(position.getX() - getVelocity());
                 } else {
-                    _position.setX(dest.getX());
+                    position.setX(dest.getX());
                 }
             }
         }
 
-        if (_position.getY() == dest.getY()) {
-            if (_position.getX() == dest.getX()) {
-            } else if (_position.getX() < dest.getX()) {
-                if ((_position.getX() + getVelocity()) <= dest.getX()) {
-                    _position.setX(_position.getX() + getVelocity());
+        if (position.getY() == dest.getY()) {
+            if (position.getX() == dest.getX()) {
+            } else if (position.getX() < dest.getX()) {
+                if ((position.getX() + getVelocity()) <= dest.getX()) {
+                    position.setX(position.getX() + getVelocity());
                 } else {
-                    _position.setX(dest.getX());
+                    position.setX(dest.getX());
                 }
             } else {
-                if ((_position.getX() - getVelocity()) >= dest.getX()) {
-                    _position.setX(_position.getX() - getVelocity());
+                if ((position.getX() - getVelocity()) >= dest.getX()) {
+                    position.setX(position.getX() - getVelocity());
                 } else {
-                    _position.setX(dest.getX());
+                    position.setX(dest.getX());
                 }
             }
         } else {
-            if (_position.getY() < dest.getY()) {
-                if ((_position.getY() + getVelocity()) <= dest.getY()) {
-                    _position.setY(_position.getY() + getVelocity());
+            if (position.getY() < dest.getY()) {
+                if ((position.getY() + getVelocity()) <= dest.getY()) {
+                    position.setY(position.getY() + getVelocity());
                 } else {
-                    _position.setY(dest.getY());
+                    position.setY(dest.getY());
                 }
             } else {
-                if ((_position.getY() - getVelocity()) >= dest.getY()) {
-                    _position.setY(_position.getY() - getVelocity());
+                if ((position.getY() - getVelocity()) >= dest.getY()) {
+                    position.setY(position.getY() - getVelocity());
                 } else {
-                    _position.setY(dest.getY());
+                    position.setY(dest.getY());
                 }
             }
         }
@@ -271,8 +262,8 @@ public class Car {
 
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setColor(_color);
-        g2d.fill(new Rectangle2D.Double(_position.getX(), _position.getY(), Main.carDimension, Main.carDimension));
+        g2d.setColor(color);
+        g2d.fill(new Rectangle2D.Double(position.getX(), position.getY(), Main.carDimension, Main.carDimension));
         Vector dest = getDest();
         g2d.setColor(Color.PINK);
         g2d.draw(new Line2D.Double(getPosition().getX(), getPosition().getY(), dest.getX(), dest.getY()));
@@ -280,43 +271,40 @@ public class Car {
 
     public void checkCollision() {
 
-        ArrayList<Car> cars = _map.getCars();
-        for (Car VehicleB : cars) {
-            if (getId() != VehicleB.getId()) {
-                //mesma direccao ou seja se vão para o mesmo ponto
-                if (getDest().equals(VehicleB.getDest())) {
+        ArrayList<Car> cars = map.getCars();
+        for (Car carX : cars) {
+        	
+            if (getId() != carX.getId()) {
 
-                    int secondsToCollision = MathUtils.closestPointOfApproach(this.getPrevPosition(), this.getPosition(), VehicleB.getPrevPosition(), VehicleB.getPosition());
-                    System.out.println("seconds to collison = " + secondsToCollision);
-                    //verificar a colisao mais proxima
-                    if ((600 < secondsToCollision && secondsToCollision <= 900) && this.getDistanceToDest() > VehicleB.getDistanceToDest()) {
-                        this.setState(ActionState.decelerate);
+                if (getDest().equals(carX.getDest())) {
+
+                    int secondsToCollision = MathUtils.closestPoint(this.getPrevPosition(), this.getPosition(), carX.getPrevPosition(), carX.getPosition());
+
+                    if ((600 < secondsToCollision && secondsToCollision <= 900) && this.getDistanceToDest() > carX.getDistanceToDest()) {
+                        this.setState(ActionState.DECELERATE);
+                        
                         if(this.getPosition().getX() - this.getPrevPosition().getX() == 0 ){
-                            // this means it moving through Y, so
                             this.setPosition(new Vector(this.getPosition().getX() + this.getVelocity(), this.getPosition().getY()));
-                            System.out.println("moving to PLUS X");
                         }
+                        
                         if(this.getPosition().getY() - this.getPrevPosition().getY() == 0 ){
-                            // this means it moving through X, so
                             this.setPosition(new Vector(this.getPosition().getX(), this.getPosition().getY() + this.getVelocity() ));
-                            System.out.println("moving to PLUS Y");
                         }
-                        System.out.println("COLISAO decelerate");
+
                         return;
-                    } else if ((200 < secondsToCollision && secondsToCollision <= 600) && this.getDistanceToDest() > VehicleB.getDistanceToDest()) {
-                        this.setState(ActionState.stopping);
-                        System.out.println("COLISAO stopping");
+                        
+                    } else if ((200 < secondsToCollision && secondsToCollision <= 600) && this.getDistanceToDest() > carX.getDistanceToDest()) {
+                        this.setState(ActionState.STOP);
                         return;
                     } else if ((secondsToCollision >= 1000) || (secondsToCollision <= 200)) {
-                        this.setState(ActionState.accelerate);
-                        Date d = new Date();
-                        System.out.println("COLISAO accelerate - " + d.toString());
-                        // } else if ((secondsToCollision <= 1 && secondsToCollision > 0) && getDistanceToDest() > VehicleB.getDistanceToDest()) {
-                    } else if (getPosition().distance(VehicleB.getPosition()) < 1.0d) {
+                        this.setState(ActionState.ACCELERATE);
+                        
+                    } else if (getPosition().distance(carX.getPosition()) < 1.0d) {
                         System.out.println("Colidiu");
                     }
                 } else {
-                    this.setState(ActionState.accelerate);
+                	
+                    this.setState(ActionState.ACCELERATE);
                 }
             }
         }
@@ -324,136 +312,99 @@ public class Car {
     }
 
     public void reset() {
-        _state = ActionState.normal;
-        _velocity = _velMin;
-        _prevPosition.copy(_initPosition);
-        _position.copy(_initPosition);
-        _nextDest = 0;
+        state = ActionState.NORMAL;
+        velocity = minVel;
+        previousPosition.copy(initPosition);
+        position.copy(initPosition);
+        nextDest = 0;
     }
 
-    // <editor-fold defaultstate="collapsed" desc="GETS/SETS">
     public Color getColor() {
-        return _color;
+        return color;
     }
 
     public void setColor(Color color) {
-        _color = color;
+        this.color = color;
     }
 
-    /**
-     * @return the _id
-     */
     public short getId() {
-        return _id;
+        return id;
     }
 
-    /**
-     * @param id the _id to set
-     */
     public void setId(short id) {
-        _id = id;
+        this.id = id;
     }
 
-    /**
-     * @return the _position
-     */
     public Vector getPosition() {
-        synchronized (_position) {
-            return _position;
+        synchronized (position) {
+            return position;
         }
     }
 
-    /**
-     * @param position the _position to set
-     */
     public void setPosition(Vector position) {
-        synchronized (_position) {
-            _position = position;
+        synchronized (position) {
+            this.position = position;
         }
     }
 
-    /**
-     * @return the _prevPosition
-     */
     public Vector getPrevPosition() {
-        synchronized (_prevPosition) {
-            return _prevPosition;
+        synchronized (previousPosition) {
+            return previousPosition;
         }
     }
 
-    /**
-     * @param prevPosition the _prevPosition to set
-     */
     public void setPrevPosition(Vector prevPosition) {
-        synchronized (_prevPosition) {
-            _prevPosition = prevPosition;
+        synchronized (previousPosition) {
+        	this.previousPosition = prevPosition;
         }
     }
 
-    /**
-     * @return the _state
-     */
     public ActionState getState() {
-        return _state;
+        return state;
     }
 
-    /**
-     * @param state the _state to set
-     */
     public void setState(ActionState state) {
-        _state = state;
+        this.state = state;
     }
 
-    /**
-     * @return the _velocity
-     */
     public double getVelocity() {
-        return MathUtils.round(_velocity);
+        return MathUtils.round(velocity);
     }
 
-    /**
-     * @param velocity the _velocity to set
-     */
     public void setVelocity(double velocity) {
         velocity = MathUtils.round(velocity);
-        if (velocity < _velMin || velocity > _velMax) {
+        if (velocity < minVel || velocity > maxVel) {
             return;
         }
-        _velocity = velocity;
+        this.velocity = velocity;
     }
 
-    public void setVelocityToZero() {
-        _velocity = 0;
+    public void stop() {
+        velocity = 0;
     }
 
-    public void setVelocityAdd(double addvelocity) {
-        addvelocity = MathUtils.round(addvelocity);
-        if ((_velocity + addvelocity) > _velMax) {
+    public void increaseVelocity(double v) {
+        v = MathUtils.round(v);
+        if ((velocity + v) > maxVel) {
             return;
         }
-        _velocity = MathUtils.round(_velocity + addvelocity);
+        velocity = MathUtils.round(velocity + v);
     }
 
-    public void setVelocitySub(double subvelocity) {
-        subvelocity = MathUtils.round(subvelocity);
-        if ((_velocity - subvelocity) < _velMin) {
+    public void decreaseVelocity(double v) {
+        v = MathUtils.round(v);
+        if ((velocity - v) < maxVel) {
             return;
         }
-        _velocity = MathUtils.round(_velocity - subvelocity);
+        velocity = MathUtils.round(velocity - v);
     }
 
-    /**
-     * @return the _path
-     */
     public Vector[] getPath() {
-        return _path;
+        return path;
     }
 
-    /**
-     * @param path the _path to set
-     */
     public void setPath(Vector[] path) {
-        _path = path;
+        this.path = path;
     }
 
     public double getVelocityKM() {
@@ -461,40 +412,23 @@ public class Car {
     }
 
     public Vector getDest() {
-        return getPath()[_nextDest];
+        return getPath()[nextDest];
     }
 
-    /**
-     * @return the _distanceToNextDest
-     */
     public double getDistanceToDest() {
-        return MathUtils.round(_distanceToDest);
+        return MathUtils.round(distanceToDest);
     }
 
-    /**
-     * @param distanceToDest the _distanceToDest to set
-     */
     public void setDistanceToDest(double distanceToDest) {
-        _distanceToDest = MathUtils.round(distanceToDest);
+        this.distanceToDest = MathUtils.round(distanceToDest);
     }
 
-    /**
-     * @return the nextDest
-     */
     public int getNextDest() {
-        return _nextDest;
+        return nextDest;
     }
 
-    /**
-     * @param nextDest the nextDest to set
-     */
     public void setNextDest(int nextDest) {
-        _nextDest = nextDest;
+        this.nextDest = nextDest;
     }
 
-// </editor-fold>
-    @Override
-    public final String toString() {
-        return String.format("Position: %s with State: %s", _position, _state);
-    }
 }

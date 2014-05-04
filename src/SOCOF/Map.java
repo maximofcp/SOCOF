@@ -1,7 +1,8 @@
 package SOCOF;
 
-import Utils.MathUtils;
-import Utils.Rectangle;
+import Util.Building;
+import Util.MathUtils;
+
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Observable;
@@ -13,11 +14,11 @@ import java.util.Observable;
 public class Map extends Observable {
 
     private ArrayList<Car> cars;
-    private ArrayList<Rectangle> rectangles;
+    private ArrayList<Building> buildings;
 
     public Map() {
-        this.cars = new ArrayList();
-        this.rectangles = new ArrayList();
+        this.cars = new ArrayList<Car>();
+        this.buildings = new ArrayList<Building>();
     }
 
     public void addCar(Car c) {
@@ -32,22 +33,23 @@ public class Map extends Observable {
         return this.getCars().size();
     }
 
-    public void checkCollisionOnCar(Car VehicleA) {
+    public void checkCollisionOnCar(Car carX) {
 
         for (int i = 0; i < getCars().size(); i++) {
-            Car VehicleB = getCars().get(i);
-            if (VehicleA.getId() != VehicleB.getId()) {
-                int secondsToCollision = MathUtils.closestPointOfApproach(VehicleA.getPrevPosition(), VehicleA.getPosition(), VehicleB.getPrevPosition(), VehicleB.getPosition());
-                //verificar a colisao mais proxima
+            Car carY = getCars().get(i);
+            
+            if (carX.getId() != carY.getId()) {
+            	
+                int secondsToCollision = MathUtils.closestPoint(carX.getPrevPosition(), carX.getPosition(), carY.getPrevPosition(), carY.getPosition());
                 if (secondsToCollision < 3 && secondsToCollision > 2) {
-                    VehicleA.setState(Car.ActionState.decelerate);
-                    System.out.println("COLISAO decelerate");
+                	carX.setState(Car.ActionState.DECELERATE);
+
                 } else if (secondsToCollision == 2) {
-                    VehicleA.setState(Car.ActionState.stopping);
-                    System.out.println("COLISAO stopping");
+                	carX.setState(Car.ActionState.STOP);
+
                 } else {
-                    VehicleA.setState(Car.ActionState.accelerate);
-                    System.out.println("COLISAO accelerate");
+                	carX.setState(Car.ActionState.ACCELERATE);
+
                 }
             }
         }
@@ -80,29 +82,18 @@ public class Map extends Observable {
         for (Car c : getCars()) {
             c.draw(g);
         }
-        //notifica o observer (MapMainUI) que deve chamar o repaint()
-        //isto server para a interface ficar sempre em loop a redesenhar os objetos 2d
         letNotify();
     }
 
-    /**
-     * @param cars the cars to set
-     */
     public void setCars(ArrayList<Car> cars) {
         this.cars = cars;
     }
 
-    /**
-     * @return the rectangles
-     */
-    public ArrayList<Rectangle> getRectangles() {
-        return rectangles;
+    public ArrayList<Building> getBuildings() {
+        return buildings;
     }
 
-    /**
-     * @param rectangles the rectangles to set
-     */
-    public void setRectangles(ArrayList<Rectangle> rectangles) {
-        this.rectangles = rectangles;
+    public void setBuildings(ArrayList<Building> buildings) {
+        this.buildings = buildings;
     }
 }
